@@ -1,0 +1,129 @@
+* goals
+** drop-in replacement for com.cognitect.aws/api
+*** work with com.cognitect.aws/endpoints and all of the various service packages as-is.
+** babashka-compatible
+** make clj-kondo happy
+* aws-api babashka-incompatibilities
+** cognitect.aws.util/date-format uses java.text.SimpleDateFormat
+java.text.SimpleDateFormat isn't included in babashka
+replace with java.time equivalent
+=date-format= works in conjunction with =cognitect.aws.util/format-date=
+Note that aws-api's perferred instant class is java.util.Date, so we'll honor that, but
+operate through java.time.Instant for formatting.
+** cognitect.aws.util/
+I'm adding reader-conditionals to use cheshire.core for JSON in babashka rather than clojure.data.json.
+
+**  cognitect.aws.util/hmac-sha-256 uses javax.crypto.Mac, javax.crypto.spec.SecretKeySpec
+These aren't included in babashka
+I'm not sure if there's an alternative method.
+
+** cognitect.aws.credentials uses java.util.concurrent.ScheduledExecutorService
+It's used for cognitect.aws.credentials/cached-credentials-with-auto-refresh
+java.util.concurrent.ScheduledExecutorService is not included in babashka
+What's an alternative?
+
+**  cognitect.aws.client
+*** cognitect.aws.signers relies on cognitect.aws.client
+
+* namespaces
+- [X] cognitect/aws/client.clj
+When I try to eval cognitect.aws.client, with Babashka I get the following exception:
+#+begin_src
+java.lang.ClassCastException: clojure.core$meta__5436 cannot be cast to clojure.lang.MultiFn
+ at sci.impl.multimethods$multi_fn_add_method_impl.invokeStatic (multimethods.cljc:97)
+    sci.impl.multimethods$multi_fn_add_method_impl.invoke (multimethods.cljc:97)
+#+end_src
+Replacing clojure.lang.IObj interface implementation with com.grzm.aws.client.ClientMeta protocol
+This will require some additional fixes where we're calling =meta= and =with-meta= on client.Client instances.
+
+- [X] cognitect/aws/client/api.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/send-request
+{:type :sci/error, :line 71, :column 11, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/client/api/async.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+Replaced configufrable http-client with fixed, included java.net.http implementation.
+
+- [X] cognitect/aws/client/api/async.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/send-request
+{:type :sci/error, :line 71, :column 11, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/client/api/async.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+
+cogitect.aws.client/Client is a deftype, which doesn't work with
+babashka, so I replaced it with defrecord.
+
+It also implements the clojure.lang.IObj interface. Records can't
+implement interface methods, so I replaced this with an additional
+ClientMeta protocol. I haven't found where the aws-api takes advantage
+of the IObj implentation, so perhaps this isn't needed at all.
+
+- [X] cognitect/aws/client/shared.clj
+- [X] cognitect/aws/config.clj
+- [X] cognitect/aws/credentials.clj
+  Removed auto-refreshing option. This relies on java.util.concurrent Executors and the like which aren't included in babashka.
+- [X] cognitect/aws/dynaload.clj
+
+  Removed load-var, replacing usage with
+  =clojure.core/requiring-resolve=. It looks like load-var predates
+  requiring-resolve, and likely was one of the motivations for requiring-resolve.
+
+- [X] cognitect/aws/ec2_metadata_utils.clj
+- [X] cognitect/aws/endpoint.clj
+- [X] cognitect/aws/http.clj
+- [X] cognitect/aws/http/cognitect.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Unable to resolve classname: java.net.SocketTimeoutException
+{:type :sci/error, :line 19, :column 3, :message "Unable to resolve classname: java.net.SocketTimeoutException", :sci.impl/callstack #object[clojure.lang.Volatile 0x7735aa23 {:status :ready, :val ({:line 2, :column 3, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/http/cognitect.clj", :ns #object[sci.impl.vars.SciNamespace 0xccc8343 "cognitect.aws.http.cognitect"]} {:line 19, :column 3, :file "cognitect/http_client.clj", :ns #object[sci.impl.vars.SciNamespace 0x365ebc31 "cognitect.http-client"]})}], :file "cognitect/http_client.clj", :locals {}}
+ at sci.impl.utils$rethrow_with_location_of_node.invokeStatic (utils.cljc:81)
+#+end_src
+- [X] cognitect/aws/interceptors.clj
+- [X] cognitect/aws/protocols/ec2.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/build-http-request
+{:type :sci/error, :line 101, :column 12, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/protocols/query.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+- [X] cognitect/aws/protocols/json.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/build-http-request
+{:type :sci/error, :line 26, :column 12, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/protocols/json.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+- [X] cognitect/aws/protocols/query.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/build-http-request
+{:type :sci/error, :line 101, :column 12, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/protocols/query.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+- [X] cognitect/aws/protocols/rest.clj
+- [X] cognitect/aws/protocols/rest_json.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/build-http-request
+{:type :sci/error, :line 33, :column 12, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/protocols/rest_json.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+- [X] cognitect/aws/protocols/rest_xml.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/build-http-request
+{:type :sci/error, :line 13, :column 12, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/protocols/rest_xml.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src
+due to com.grzm.aws.client
+- [X] cognitect/aws/region.clj
+- [X] cognitect/aws/retry.clj
+- [X] cognitect/aws/service.clj
+- [X] cognitect/aws/shape.clj
+- [X] cognitect/aws/signers.clj
+#+begin_src
+clojure.lang.ExceptionInfo: Could not resolve symbol: client/sign-http-request
+{:type :sci/error, :line 157, :column 12, :file "/Users/grzm/dev/aws-api/src/cognitect/aws/signers.clj", :phase "analysis"}
+ at sci.impl.utils$throw_error_with_location.invokeStatic (utils.cljc:20)
+#+end_src

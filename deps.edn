@@ -1,0 +1,9 @@
+{:paths   ["src" "resources"]
+ :deps    {borkdude/spartan.spec {:git/url "https://github.com/borkdude/spartan.spec"
+                                  :sha "12947185b4f8b8ff8ee3bc0f19c98dbde54d4c90"}
+           org.clojure/clojure       {:mvn/version "1.10.1"}
+           org.clojure/core.async    {:mvn/version "1.3.622"}
+           org.clojure/tools.logging {:mvn/version "1.1.0"}
+           org.clojure/data.json     {:mvn/version "1.0.0"}
+           org.clojure/data.xml      {:mvn/version "0.2.0-alpha6"}
+           com.cognitect/http-client {:mvn/version "0.1.106"}}}

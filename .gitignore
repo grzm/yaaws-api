@@ -1,0 +1,5 @@
+.cpcache
+target
+logs
+log
+.clj-kondo/.cache
