@@ -21,7 +21,7 @@ Add to your `deps.edn`
 
 ```clojure
 {:deps {
-   com.grzm.aws/yaapi {:git/sha "..."} ;; some sha
+   com.grzm.aws/yaapi {:git/sha "0edb68904cd5a08b424d1a178d437d5ea4ac526e"}
 }}
 ```
 
@@ -49,7 +49,8 @@ Add to your `deps.edn`
    `javax.crypto.spec.SecretKeySpec` for determining
    hmac-sha-256. These classes which aren't currently included in
    babahska.  It does work with a custom babashka build that includes
-   these classes.
+   these classes. See https://github.com/babashka/babashka/pull/1066
+   for a build with the classes included.
 
 ## Copyright and License
 
