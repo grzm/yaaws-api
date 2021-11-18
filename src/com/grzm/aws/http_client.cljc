@@ -4,7 +4,7 @@
 
 (ns com.grzm.aws.http-client
   (:require
-   [clojure.core.async :refer (put!) :as a]
+   [clojure.core.async :refer [put!] :as a]
    [com.grzm.aws.http-client.client :as client]
    [com.grzm.aws.http-client.specs])
   (:import
@@ -94,22 +94,23 @@
   [{:keys [scheme server-name server-port uri query-string
            request-method headers body]
     :or {scheme "https"}
-    :as _m}]
+    :as m}]
   (let [uri (URI. (str (name scheme)
-             "://"
-             server-name
-             (some->> server-port (str ":"))
-             uri
-             (some->> query-string (str "?"))))
+                       "://"
+                       server-name
+                       (some->> server-port (str ":"))
+                       uri
+                       (some->> query-string (str "?"))))
         method (method-string request-method)
         bp (if body
              (HttpRequest$BodyPublishers/ofByteArray (byte-buffer->byte-array body))
-             (HttpRequest$BodyPublishers/noBody))]
-    (.build (cond-> (-> (HttpRequest/newBuilder uri)
-                        (.method method bp))
+             (HttpRequest$BodyPublishers/noBody))
+        builder (-> (HttpRequest/newBuilder uri)
+                    (.method method bp))]
+    (.build (cond-> builder
               (seq headers) (add-headers headers)
-              ;; (::timeout-msec m) (.timeout (Duration/ofMillis (::timeout-msec m)))
-              ))))
+              (::timeout-msec m) (.timeout (Duration/ofMillis
+                                             (::timeout-msec m)))))))
 
 (defn error->anomaly [^Throwable t]
   {:cognitect.anomalies/category :cognitect.anomalies/fault
@@ -168,6 +169,7 @@
     :or {pending-ops-limit 64
          connect-timeout-msecs 5000}
     :as _config}]
+  (System/setProperty "jdk.httpclient.allowRestrictedHeaders" "host")
   (let [http-client (.build (-> (HttpClient/newBuilder)
                                 (.connectTimeout (Duration/ofMillis connect-timeout-msecs))
                                 (.followRedirects HttpClient$Redirect/NORMAL)))]

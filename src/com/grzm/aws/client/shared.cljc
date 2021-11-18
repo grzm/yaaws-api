@@ -7,7 +7,8 @@
 (declare http-client)
 
 (def ^:private shared-http-client
-  (delay ((requiring-resolve 'com.grzm.aws.http.grzm/create))))
+  (delay #?(:bb ((requiring-resolve 'com.grzm.aws.http.http-kit/create))
+            :clj ((requiring-resolve 'com.grzm.aws.http.grzm/create)))))
 
 (def ^:private shared-credentials-provider
   (delay (credentials/default-credentials-provider (http-client))))
