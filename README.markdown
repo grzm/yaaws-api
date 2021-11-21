@@ -17,18 +17,23 @@ com.cognitect.aws service packages.
 
 ## In brief
 
-Add to your `deps.edn`
+Add to your `deps.edn` for Clojure or `bb.edn` for babashka:
 
 ```clojure
-{:deps {
-   com.grzm.aws/yaapi {:git/sha "0edb68904cd5a08b424d1a178d437d5ea4ac526e"}
-}}
+{:deps {com.github.grzm/yaaws-api {:git/sha "a8e43f7861fddff572c60740124f02a33a176f10"}
+        com.cognitect.aws/endpoints {:mvn/version "1.1.12.110"}
+        com.cognitect.aws/s3        {:mvn/version "814.2.991.0"}}}
 ```
 
 ```clojure
 (require '[com.grzm.aws.client.api :as aws])
-(def sts (aws/client {:api :sts}))
-(keys (aws/invoke sts {:op :GetCallerIdentity))) ;; => (:UserId :Account :Arn)
+
+(def sts (aws/client {:api :s3 :region "eu-central-1"}))
+
+(def buckets (-> (aws/invoke sts {:op :ListBuckets})
+                 :Buckets))
+
+(prn buckets)
 ```
 
 ## Differences from aws-api
