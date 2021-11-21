@@ -28,7 +28,7 @@ Add to your `deps.edn`
 ```clojure
 (require '[com.grzm.aws.client.api :as aws])
 (def sts (aws/client {:api :sts}))
-(keys (aws/invoke sts {:op :GetCallerIdentity))) ;; => (:UserId :Account :Arn)
+(keys (aws/invoke sts {:op :GetCallerIdentity}))) ;; => (:UserId :Account :Arn)
 ```
 
 ## Differences from aws-api
