@@ -1,0 +1,9 @@
+{:paths ["src"]
+ :deps {com.grzm.aws/api {:local/root "../"}
+        com.cognitect.aws/endpoints {:mvn/version "1.1.12.105"}
+        com.cognitect.aws/sts
+        {:mvn/version "811.2.958.0", :aws/serviceFullName "AWS Security Token Service"}
+        com.cognitect.aws/s3
+        {:mvn/version "814.2.991.0", :aws/serviceFullName "Amazon Simple Storage Service"}}
+ :aliases
+ {:run-clj {:main-opts ["-m" "com.grzm.aws-api.ex"]}}}
